@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .grain {
+    position: relative;
+  }
+
+  .grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    z-index: 1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='4' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' /%3E%3C/svg%3E");
+  }
+}
+
+@layer base {
+  :root {
+    /* Art Gallery Color Palette - Light Mode */
+    --background: 42 20% 97%;
+    --foreground: 24 10% 10%;
+    --card: 40 15% 99%;
+    --card-foreground: 24 10% 10%;
+    --popover: 40 15% 99%;
+    --popover-foreground: 24 10% 10%;
+
+    /* Primary: Burnt Sienna/Terracotta - Art world sophistication */
+    --primary: 16 65% 60%;
+    --primary-foreground: 42 20% 97%;
+
+    /* Secondary: Deep Teal */
+    --secondary: 184 35% 28%;
+    --secondary-foreground: 42 20% 97%;
+
+    --muted: 40 15% 92%;
+    --muted-foreground: 24 10% 45%;
+    --accent: 16 80% 92%;
+    --accent-foreground: 24 10% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 42 20% 97%;
+
+    --border: 24 15% 88%;
+    --input: 24 15% 88%;
+    --ring: 16 65% 60%;
+
+    --chart-1: 16 65% 60%;
+    --chart-2: 184 35% 28%;
+    --chart-3: 35 85% 55%;
+    --chart-4: 195 75% 40%;
+    --chart-5: 25 95% 50%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    /* Art Gallery Color Palette - Dark Mode */
+    --background: 0 0% 6%;
+    --foreground: 42 20% 96%;
+    --card: 0 0% 10%;
+    --card-foreground: 42 20% 96%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 42 20% 96%;
+
+    /* Primary: Lighter Terracotta for dark mode */
+    --primary: 16 70% 65%;
+    --primary-foreground: 0 0% 6%;
+
+    /* Secondary: Lighter Teal */
+    --secondary: 184 40% 35%;
+    --secondary-foreground: 42 20% 96%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 16 40% 20%;
+    --accent-foreground: 42 20% 96%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 42 20% 96%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 16 70% 65%;
+
+    --chart-1: 16 70% 65%;
+    --chart-2: 184 40% 35%;
+    --chart-3: 35 85% 60%;
+    --chart-4: 195 75% 45%;
+    --chart-5: 25 95% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground grain;
+    font-family: 'Manrope', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.8s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.8s ease-out forwards;
+  }
+}
