@@ -3,10 +3,10 @@ import { bsc, bscTestnet } from 'viem/chains';
 export const privyConfig = {
   appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
   config: {
-    loginMethods: ['wallet', 'email'],
+    loginMethods: ['wallet', 'email'] as ('wallet' | 'email')[],
     appearance: {
       theme: 'light' as const,
-      accentColor: '#F0B90B', // Binance yellow
+      accentColor: '#F0B90B' as `#${string}`, // Binance yellow
       logo: '/logo.png',
     },
     defaultChain: process.env.NEXT_PUBLIC_CHAIN_ID === '56' ? bsc : bscTestnet,

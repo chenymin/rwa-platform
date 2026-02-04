@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Search, Filter, TrendingUp, Loader2 } from 'lucide-react';
+import { Search, Filter, TrendingUp, Loader2, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { MintDialog } from '@/components/artworks/mint-dialog';
 
 interface Artwork {
   id: string;
@@ -28,6 +29,8 @@ export default function MarketplacePage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [mintDialogOpen, setMintDialogOpen] = useState(false);
+  const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
 
   useEffect(() => {
     fetchArtworks();
@@ -227,9 +230,24 @@ export default function MarketplacePage() {
                           )}
                         </div>
 
-                        <Button className="w-full mt-4" size="sm">
-                          查看详情
-                        </Button>
+                        <div className="flex gap-2 mt-4">
+                          <Button variant="outline" className="flex-1" size="sm">
+                            查看详情
+                          </Button>
+                          <Button
+                            className="flex-1 gap-1"
+                            size="sm"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setSelectedArtwork(artwork);
+                              setMintDialogOpen(true);
+                            }}
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                            交易
+                          </Button>
+                        </div>
                       </div>
                     </Card>
                   </Link>
@@ -239,6 +257,13 @@ export default function MarketplacePage() {
           )}
         </div>
       </section>
+
+      {/* Mint Dialog */}
+      <MintDialog
+        open={mintDialogOpen}
+        onOpenChange={setMintDialogOpen}
+        artworkTitle={selectedArtwork?.title}
+      />
     </div>
   );
 }
