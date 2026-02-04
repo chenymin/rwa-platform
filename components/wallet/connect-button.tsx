@@ -1,8 +1,6 @@
 'use client';
 
-import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { useBalance, useReadContract } from 'wagmi';
-import { formatUnits } from 'viem';
+import { usePrivy } from '@privy-io/react-auth';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,84 +12,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/useAuth';
-
-// 艺术品代币合约地址
-const ART_TOKEN_CONTRACT = '0x49bd8fb9ff76a933aaf7f630537bbacdccc0329c' as const;
-
-// ABI for reading USDT address
-const ART_TOKEN_ABI = [
-  {
-    inputs: [],
-    name: 'USDT',
-    outputs: [{ internalType: 'contract IERC20', name: '', type: 'address' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
-
-// ERC20 ABI for reading balance
-const ERC20_ABI = [
-  {
-    inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
-    name: 'balanceOf',
-    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'decimals',
-    outputs: [{ internalType: 'uint8', name: '', type: 'uint8' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
+import { useWalletBalances } from '@/lib/hooks/useTokenData';
 
 export function ConnectButton() {
   const { ready, login, logout: privyLogout, authenticated: privyAuthenticated } = usePrivy();
-  const { wallets } = useWallets();
   const { user, authenticated, loading: authLoading, error: authError } = useAuth();
   const supabase = createClient();
 
-  // 获取钱包地址 - 在所有 hooks 之前计算
-  const wallet = wallets[0];
-  const address = wallet?.address as `0x${string}` | undefined;
-
-  // 读取 BNB 余额 - 必须在所有条件返回之前调用
-  const { data: balance } = useBalance({
-    address: address,
-    query: {
-      enabled: !!address,
-    },
-  });
-
-  // 读取 USDT 合约地址
-  const { data: usdtAddress } = useReadContract({
-    address: ART_TOKEN_CONTRACT,
-    abi: ART_TOKEN_ABI,
-    functionName: 'USDT',
-  });
-
-  // 读取 USDT 余额
-  const { data: usdtBalance } = useReadContract({
-    address: usdtAddress,
-    abi: ERC20_ABI,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!usdtAddress && !!address,
-    },
-  });
-
-  // 读取 USDT decimals
-  const { data: usdtDecimals } = useReadContract({
-    address: usdtAddress,
-    abi: ERC20_ABI,
-    functionName: 'decimals',
-    query: {
-      enabled: !!usdtAddress,
-    },
-  });
+  // 使用统一的钱包余额 hook
+  const { address, isConnected, bnb, usdt } = useWalletBalances();
 
   // Handle logout from both Privy and Supabase
   const handleLogout = async () => {
@@ -146,9 +75,6 @@ export function ConnectButton() {
     ? `${address.slice(0, 6)}...${address.slice(-4)}`
     : '已连接';
 
-  // USDT decimals 默认为 6
-  const usdtDec = usdtDecimals ?? 6;
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -168,13 +94,13 @@ export function ConnectButton() {
           <div>
             <div className="text-xs text-muted-foreground">BNB 余额</div>
             <div className="font-semibold">
-              {balance ? `${parseFloat(formatUnits(balance.value, balance.decimals)).toFixed(4)} ${balance.symbol}` : '加载中...'}
+              {bnb.formatted ? `${bnb.formatted} ${bnb.symbol}` : '加载中...'}
             </div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">USDT 余额</div>
             <div className="font-semibold">
-              {usdtBalance !== undefined ? `${parseFloat(formatUnits(usdtBalance, usdtDec)).toFixed(2)} USDT` : '加载中...'}
+              {usdt.formatted ? `${usdt.formatted} USDT` : '加载中...'}
             </div>
           </div>
         </div>

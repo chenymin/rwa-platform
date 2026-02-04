@@ -1,112 +1,21 @@
 'use client';
 
-import { useWallets } from '@privy-io/react-auth';
-import { useReadContract } from 'wagmi';
 import { formatUnits } from 'viem';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Coins, ExternalLink, Wallet } from 'lucide-react';
 import Link from 'next/link';
-
-// 艺术品代币合约地址
-const ART_TOKEN_CONTRACT = '0x49bd8fb9ff76a933aaf7f630537bbacdccc0329c' as const;
-
-// 获取链配置
-const chainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || '97');
-const explorerUrl = chainId === 56 ? 'https://bscscan.com' : 'https://testnet.bscscan.com';
-
-// 艺术品代币合约 ABI
-const ART_TOKEN_ABI = [
-  {
-    inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
-    name: 'balanceOf',
-    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'symbol',
-    outputs: [{ internalType: 'string', name: '', type: 'string' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'name',
-    outputs: [{ internalType: 'string', name: '', type: 'string' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'priceUSDT',
-    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'totalSupply',
-    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
+import { ART_TOKEN_CONTRACT, CHAIN_ID, EXPLORER_URL } from '@/lib/contracts';
+import { useWalletBalances } from '@/lib/hooks/useTokenData';
 
 export default function EarningsPage() {
-  const { wallets } = useWallets();
-  const wallet = wallets[0];
-  const address = wallet?.address as `0x${string}` | undefined;
-  const isConnected = !!wallet;
-
-  // 读取代币余额
-  const { data: tokenBalance, isLoading: balanceLoading } = useReadContract({
-    address: ART_TOKEN_CONTRACT,
-    abi: ART_TOKEN_ABI,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!address,
-    },
-  });
-
-  // 读取代币符号
-  const { data: tokenSymbol } = useReadContract({
-    address: ART_TOKEN_CONTRACT,
-    abi: ART_TOKEN_ABI,
-    functionName: 'symbol',
-  });
-
-  // 读取代币名称
-  const { data: tokenName } = useReadContract({
-    address: ART_TOKEN_CONTRACT,
-    abi: ART_TOKEN_ABI,
-    functionName: 'name',
-  });
-
-  // 读取代币价格
-  const { data: priceUSDT } = useReadContract({
-    address: ART_TOKEN_CONTRACT,
-    abi: ART_TOKEN_ABI,
-    functionName: 'priceUSDT',
-  });
-
-  // 读取总供应量
-  const { data: totalSupply } = useReadContract({
-    address: ART_TOKEN_CONTRACT,
-    abi: ART_TOKEN_ABI,
-    functionName: 'totalSupply',
-  });
+  const { address, isConnected, usdt, artToken } = useWalletBalances();
 
   // 计算持有价值 (USDT)
-  const holdingValue = tokenBalance && priceUSDT
-    ? (tokenBalance * priceUSDT) / BigInt(10 ** 18)
+  const holdingValue = artToken.balance && artToken.priceUSDT
+    ? (artToken.balance * artToken.priceUSDT) / BigInt(10 ** 18)
     : BigInt(0);
-
-  // USDT decimals (MockUSDT 是 6)
-  const usdtDecimals = 6;
 
   if (!isConnected) {
     return (
@@ -142,19 +51,19 @@ export default function EarningsPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Coins className="h-5 w-5" />
-                  {tokenName || '艺术品代币'}
+                  {artToken.name || '艺术品代币'}
                 </CardTitle>
                 <CardDescription>
-                  {tokenSymbol || 'ART'}
+                  {artToken.symbol || 'ART'}
                 </CardDescription>
               </div>
               <Badge variant="outline" className="font-mono">
-                {tokenSymbol || 'ART'}
+                {artToken.symbol || 'ART'}
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            {balanceLoading ? (
+            {!artToken.formatted ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
@@ -164,9 +73,9 @@ export default function EarningsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">持有数量</p>
                   <p className="text-3xl font-bold">
-                    {tokenBalance ? parseFloat(formatUnits(tokenBalance, 18)).toFixed(4) : '0'}
+                    {artToken.formatted}
                     <span className="text-lg font-normal text-muted-foreground ml-2">
-                      {tokenSymbol || 'ART'}
+                      {artToken.symbol || 'ART'}
                     </span>
                   </p>
                 </div>
@@ -175,7 +84,7 @@ export default function EarningsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">估值</p>
                   <p className="text-xl font-semibold text-green-600">
-                    ≈ {holdingValue ? parseFloat(formatUnits(holdingValue, usdtDecimals)).toFixed(2) : '0'} USDT
+                    ≈ {holdingValue ? parseFloat(formatUnits(holdingValue, usdt.decimals)).toFixed(2) : '0'} USDT
                   </p>
                 </div>
 
@@ -183,11 +92,11 @@ export default function EarningsPage() {
                 <div className="pt-4 border-t">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">单价</span>
-                    <span>{priceUSDT ? formatUnits(priceUSDT, usdtDecimals) : '-'} USDT</span>
+                    <span>{artToken.priceUSDT ? formatUnits(artToken.priceUSDT, usdt.decimals) : '-'} USDT</span>
                   </div>
                   <div className="flex justify-between text-sm mt-2">
                     <span className="text-muted-foreground">总供应量</span>
-                    <span>{totalSupply ? parseFloat(formatUnits(totalSupply, 18)).toLocaleString() : '-'}</span>
+                    <span>{artToken.totalSupply ? parseFloat(formatUnits(artToken.totalSupply, 18)).toLocaleString() : '-'}</span>
                   </div>
                 </div>
 
@@ -200,7 +109,7 @@ export default function EarningsPage() {
                   </Button>
                   <Button asChild variant="outline" size="sm" className="gap-1">
                     <a
-                      href={`${explorerUrl}/token/${ART_TOKEN_CONTRACT}?a=${address}`}
+                      href={`${EXPLORER_URL}/token/${ART_TOKEN_CONTRACT}?a=${address}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -225,7 +134,7 @@ export default function EarningsPage() {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">合约地址</span>
               <a
-                href={`${explorerUrl}/address/${ART_TOKEN_CONTRACT}`}
+                href={`${EXPLORER_URL}/address/${ART_TOKEN_CONTRACT}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-mono text-primary hover:underline flex items-center gap-1"
@@ -236,7 +145,7 @@ export default function EarningsPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">网络</span>
-              <span>{chainId === 56 ? 'BNB Smart Chain' : 'BNB Smart Chain Testnet'}</span>
+              <span>{CHAIN_ID === 56 ? 'BNB Smart Chain' : 'BNB Smart Chain Testnet'}</span>
             </div>
           </div>
         </CardContent>
