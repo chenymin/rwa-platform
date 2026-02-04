@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,23 @@ interface Artwork {
   image_url: string | null;
   status: string;
   created_at: string;
+}
+
+// 动画基础样式（提取到组件外部避免重复创建）
+const baseAnimationStyle = {
+  animationName: 'fadeInUp',
+  animationDuration: '0.6s',
+  animationTimingFunction: 'ease-out',
+  animationFillMode: 'forwards',
+  opacity: 0,
+} as const;
+
+// 生成带延迟的动画样式
+function getAnimationStyle(index: number) {
+  return {
+    ...baseAnimationStyle,
+    animationDelay: `${index * 0.05}s`,
+  };
 }
 
 export default function MarketplacePage() {
@@ -60,14 +77,37 @@ export default function MarketplacePage() {
     }
   }
 
-  const filteredArtworks = artworks.filter((artwork) => {
-    const matchesSearch =
-      artwork.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      artwork.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      artwork.token_name.toLowerCase().includes(searchQuery.toLowerCase());
+  // 使用 useMemo 缓存过滤结果
+  const filteredArtworks = useMemo(() => {
+    return artworks.filter((artwork) => {
+      const matchesSearch =
+        artwork.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        artwork.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        artwork.token_name.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesSearch;
-  });
+      return matchesSearch;
+    });
+  }, [artworks, searchQuery]);
+
+  // 使用 useCallback 缓存事件处理器
+  const handleTradeClick = useCallback((e: React.MouseEvent, artwork: Artwork) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedArtwork(artwork);
+    setMintDialogOpen(true);
+  }, []);
+
+  const handleCategoryChange = useCallback((category: string) => {
+    setSelectedCategory(category);
+  }, []);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
+
+  const handleMintDialogChange = useCallback((open: boolean) => {
+    setMintDialogOpen(open);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/10 to-background">
@@ -103,7 +143,7 @@ export default function MarketplacePage() {
                 type="text"
                 placeholder="搜索艺术品..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
                 className="pl-10 h-12 bg-background/80 backdrop-blur-sm"
               />
             </div>
@@ -111,21 +151,21 @@ export default function MarketplacePage() {
             <div className="flex gap-2 items-center">
               <Button
                 variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                onClick={() => setSelectedCategory('all')}
+                onClick={() => handleCategoryChange('all')}
                 size="sm"
               >
                 全部
               </Button>
               <Button
                 variant={selectedCategory === 'trending' ? 'default' : 'outline'}
-                onClick={() => setSelectedCategory('trending')}
+                onClick={() => handleCategoryChange('trending')}
                 size="sm"
               >
                 热门
               </Button>
               <Button
                 variant={selectedCategory === 'new' ? 'default' : 'outline'}
-                onClick={() => setSelectedCategory('new')}
+                onClick={() => handleCategoryChange('new')}
                 size="sm"
               >
                 最新
@@ -170,14 +210,7 @@ export default function MarketplacePage() {
                     key={artwork.id}
                     href={`/marketplace/${artwork.id}`}
                     className="group"
-                    style={{
-                      animationName: 'fadeInUp',
-                      animationDuration: '0.6s',
-                      animationTimingFunction: 'ease-out',
-                      animationFillMode: 'forwards',
-                      animationDelay: `${index * 0.05}s`,
-                      opacity: 0
-                    }}
+                    style={getAnimationStyle(index)}
                   >
                     <Card className="overflow-hidden hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-2 border-2 hover:border-primary/30 bg-card/80 backdrop-blur-sm h-full flex flex-col">
                       {/* Image */}
@@ -237,12 +270,7 @@ export default function MarketplacePage() {
                           <Button
                             className="flex-1 gap-1"
                             size="sm"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setSelectedArtwork(artwork);
-                              setMintDialogOpen(true);
-                            }}
+                            onClick={(e) => handleTradeClick(e, artwork)}
                           >
                             <ShoppingCart className="h-4 w-4" />
                             交易
@@ -261,7 +289,7 @@ export default function MarketplacePage() {
       {/* Mint Dialog */}
       <MintDialog
         open={mintDialogOpen}
-        onOpenChange={setMintDialogOpen}
+        onOpenChange={handleMintDialogChange}
         artworkTitle={selectedArtwork?.title}
       />
     </div>

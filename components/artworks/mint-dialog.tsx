@@ -147,8 +147,11 @@ export function MintDialog({ open, onOpenChange, artworkTitle }: MintDialogProps
       await waitForTransaction(hash);
       console.log('Mint confirmed!');
 
-      await usdt.refetchBalance();
-      await artToken.refetchBalance();
+      // 并行刷新余额
+      await Promise.all([
+        usdt.refetchBalance(),
+        artToken.refetchBalance()
+      ]);
       setStep('success');
     } catch (err: unknown) {
       console.error('Mint error:', err);

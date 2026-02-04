@@ -194,58 +194,75 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload image to Supabase Storage
+    // 准备文件上传
+    const timestamp = Date.now();
     const imageExt = imageFile.name.split('.').pop();
-    const imageFileName = `${artistData.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${imageExt}`;
+    const imageFileName = `${artistData.id}/${timestamp}-${Math.random().toString(36).substring(7)}.${imageExt}`;
 
-    const imageBuffer = await imageFile.arrayBuffer();
-    const { error: imageError } = await storageSupabase.storage
-      .from('artworks')
-      .upload(imageFileName, imageBuffer, {
-        contentType: imageFile.type,
-        upsert: false,
-      });
+    // 准备证书文件名（如果有）
+    let certFileName: string | null = null;
+    if (certificateFile && certificateFile.size > 0) {
+      const certExt = certificateFile.name.split('.').pop();
+      certFileName = `${artistData.id}/${timestamp}-cert-${Math.random().toString(36).substring(7)}.${certExt}`;
+    }
 
+    // 并行读取文件 Buffer
+    const [imageBuffer, certBuffer] = await Promise.all([
+      imageFile.arrayBuffer(),
+      certFileName ? certificateFile.arrayBuffer() : Promise.resolve(null),
+    ]);
+
+    // 并行上传文件
+    const uploadPromises: Promise<{ error: Error | null }>[] = [
+      storageSupabase.storage
+        .from('artworks')
+        .upload(imageFileName, imageBuffer, {
+          contentType: imageFile.type,
+          upsert: false,
+        }),
+    ];
+
+    if (certFileName && certBuffer) {
+      uploadPromises.push(
+        storageSupabase.storage
+          .from('artworks')
+          .upload(certFileName, certBuffer, {
+            contentType: certificateFile.type,
+            upsert: false,
+          })
+      );
+    }
+
+    const uploadResults = await Promise.all(uploadPromises);
+    const imageError = uploadResults[0].error;
+    const certError = uploadResults[1]?.error;
+
+    // 检查上传错误
     if (imageError) {
       console.error('Image upload error:', JSON.stringify(imageError, null, 2));
-      console.error('User ID:', user.id);
-      console.error('Bucket:', 'artworks');
-      console.error('File path:', imageFileName);
       return NextResponse.json(
         { error: '图片上传失败: ' + imageError.message, details: imageError },
         { status: 500 }
       );
     }
 
-    // Get public URL for image
+    if (certError) {
+      console.error('Certificate upload error:', certError);
+      // 清理已上传的图片
+      await storageSupabase.storage.from('artworks').remove([imageFileName]);
+      return NextResponse.json(
+        { error: '证书上传失败' },
+        { status: 500 }
+      );
+    }
+
+    // 获取公开 URL
     const { data: { publicUrl: imageUrl } } = storageSupabase.storage
       .from('artworks')
       .getPublicUrl(imageFileName);
 
-    // Upload certificate if provided
     let certificateUrl: string | null = null;
-    if (certificateFile && certificateFile.size > 0) {
-      const certExt = certificateFile.name.split('.').pop();
-      const certFileName = `${artistData.id}/${Date.now()}-cert-${Math.random().toString(36).substring(7)}.${certExt}`;
-
-      const certBuffer = await certificateFile.arrayBuffer();
-      const { error: certError } = await storageSupabase.storage
-        .from('artworks')
-        .upload(certFileName, certBuffer, {
-          contentType: certificateFile.type,
-          upsert: false,
-        });
-
-      if (certError) {
-        console.error('Certificate upload error:', certError);
-        // Clean up image if certificate upload fails
-        await storageSupabase.storage.from('artworks').remove([imageFileName]);
-        return NextResponse.json(
-          { error: '证书上传失败' },
-          { status: 500 }
-        );
-      }
-
+    if (certFileName) {
       const { data: { publicUrl } } = storageSupabase.storage
         .from('artworks')
         .getPublicUrl(certFileName);
