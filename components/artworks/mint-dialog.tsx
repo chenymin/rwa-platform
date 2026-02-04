@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useReadContract } from 'wagmi';
 import { useWallets } from '@privy-io/react-auth';
 import { parseUnits, formatUnits, encodeFunctionData, createPublicClient, http } from 'viem';
