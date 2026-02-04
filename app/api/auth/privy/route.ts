@@ -25,16 +25,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 1: 验证 Privy token (简化版本 - 生产环境需要调用 Privy API)
-    // TODO: 实现真正的 Privy token 验证
-    //const verificationResult = await verifyPrivyToken(privyToken);
-    // if (!verificationResult.success) {
-    //   return NextResponse.json(
-    //     { error: 'Invalid Privy token' },
-    //     { status: 401 }
-    //   );
-    // }
-
     // Step 2: 提取用户信息
     const privyUserId = user.id; // Privy user ID
     const walletAddress = user.wallet?.address || null;
