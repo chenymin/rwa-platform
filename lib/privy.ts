@@ -1,7 +1,10 @@
 import { bsc, bscTestnet } from 'viem/chains';
 
+const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || 'demo-app-id';
+const chainId = process.env.NEXT_PUBLIC_CHAIN_ID || '97';
+
 export const privyConfig = {
-  appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+  appId: privyAppId,
   config: {
     loginMethods: ['wallet', 'email'] as ('wallet' | 'email')[],
     appearance: {
@@ -9,7 +12,7 @@ export const privyConfig = {
       accentColor: '#F0B90B' as `#${string}`, // Binance yellow
       logo: '/logo.png',
     },
-    defaultChain: process.env.NEXT_PUBLIC_CHAIN_ID === '56' ? bsc : bscTestnet,
-    supportedChains: process.env.NEXT_PUBLIC_CHAIN_ID === '56' ? [bsc] : [bscTestnet],
+    defaultChain: chainId === '56' ? bsc : bscTestnet,
+    supportedChains: chainId === '56' ? [bsc] : [bscTestnet],
   },
 };

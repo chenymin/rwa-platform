@@ -31,8 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          {/* TEMP: Navbar removed to debug - causing 404 */}
-          {/* <Navbar /> */}
+          <Navbar />
           {children}
         </Providers>
       </body>
