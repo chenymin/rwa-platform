@@ -2,12 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ConnectButton } from '@/components/wallet/connect-button';
 import { UserMenu } from '@/components/layout/user-menu';
 import { cn } from '@/lib/utils';
 
 export function Navbar() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -68,11 +74,13 @@ export function Navbar() {
             )} />
           </Link>
 
-          {/* User Menu - Only shown when authenticated */}
-          <UserMenu />
-
-          {/* Wallet Connect Button */}
-          <ConnectButton />
+          {/* User Menu & Wallet Connect Button - only render after mount */}
+          {mounted && (
+            <>
+              <UserMenu />
+              <ConnectButton />
+            </>
+          )}
         </div>
       </div>
     </nav>

@@ -15,35 +15,15 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useWalletBalances } from '@/lib/hooks/useTokenData';
 
-export function ConnectButton() {
+// Inner component that uses wallet hooks - only rendered after mount
+function ConnectButtonInner() {
   const { ready, login, logout: privyLogout, authenticated: privyAuthenticated } = usePrivy();
   const { user, authenticated, loading: authLoading, error: authError } = useAuth();
   const supabase = createClient();
-  const [mounted, setMounted] = React.useState(false);
 
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Now it's safe to call this hook
+  const { address, isConnected, bnb, usdt } = useWalletBalances();
 
-  // 使用统一的钱包余额 hook - only after client mount to avoid SSR errors
-  let address: string | undefined = undefined;
-  let isConnected = false;
-  let bnb: any = { formatted: undefined, symbol: '' };
-  let usdt: any = { formatted: undefined };
-
-  if (mounted) {
-    try {
-      const result = useWalletBalances();
-      address = result.address;
-      isConnected = result.isConnected;
-      bnb = result.bnb;
-      usdt = result.usdt;
-    } catch (err) {
-      console.warn('Failed to fetch wallet balances:', err);
-    }
-  }
-
-  // Handle logout from both Privy and Supabase
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -53,7 +33,6 @@ export function ConnectButton() {
     }
   };
 
-  // 条件渲染
   if (!ready || authLoading) {
     return (
       <Button disabled size="sm">
@@ -62,7 +41,6 @@ export function ConnectButton() {
     );
   }
 
-  // 处理认证失败的情况：Privy 已登录但 Edge Function 认证失败
   if (privyAuthenticated && !user && authError) {
     return (
       <div className="flex flex-col items-end gap-1">
@@ -83,7 +61,6 @@ export function ConnectButton() {
     );
   }
 
-  // 只有当 Edge Function 认证成功并且有用户数据时才显示为已连接
   if (!authenticated || !user) {
     return (
       <Button onClick={login} size="sm">
@@ -115,13 +92,13 @@ export function ConnectButton() {
           <div>
             <div className="text-xs text-muted-foreground">BNB 余额</div>
             <div className="font-semibold">
-              {bnb.formatted ? `${bnb.formatted} ${bnb.symbol}` : '加载中...'}
+              {bnb?.formatted ? `${bnb.formatted} ${bnb.symbol}` : '加载中...'}
             </div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">USDT 余额</div>
             <div className="font-semibold">
-              {usdt.formatted ? `${usdt.formatted} USDT` : '加载中...'}
+              {usdt?.formatted ? `${usdt.formatted} USDT` : '加载中...'}
             </div>
           </div>
         </div>
@@ -132,4 +109,20 @@ export function ConnectButton() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+// Outer component that handles mount state
+export function ConnectButton() {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Render nothing during SSR
+    return null;
+  }
+
+  return <ConnectButtonInner />;
 }

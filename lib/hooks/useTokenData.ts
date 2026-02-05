@@ -9,7 +9,17 @@ import { ART_TOKEN_CONTRACT, ART_TOKEN_ABI, ERC20_ABI } from '@/lib/contracts';
  * 获取当前连接的钱包地址
  */
 export function useWalletAddress() {
-  const { wallets } = useWallets();
+  let wallets: any[] = [];
+  
+  try {
+    // This will throw during SSR since useWallets requires PrivyProvider
+    const result = useWallets();
+    wallets = result.wallets || [];
+  } catch (err) {
+    // Expected during SSR - PrivyProvider not available
+    console.debug('useWallets unavailable (SSR/prerender):', err instanceof Error ? err.message : err);
+  }
+  
   const wallet = wallets?.find((wallet) => wallet.walletClientType === 'privy'); // 仅支持 BSC 链
   const address = wallet?.address as `0x${string}` | undefined;
   const isConnected = !!wallet;
