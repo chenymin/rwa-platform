@@ -30,12 +30,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* TEMP: Disabled Providers to isolate 404 cause */}
-        {/* <Providers>
+        <Providers>
           <Navbar />
           {children}
-        </Providers> */}
-        {children}
+        </Providers>
       </body>
     </html>
   );
