@@ -53,3 +53,6 @@ skills/*
 .claude
 .codex
 .github
+
+# Ensure app providers is tracked even if global ignore exists
+!app/providers.tsx
