@@ -5,8 +5,9 @@ const chainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || '97');
 const chain = chainId === 56 ? bsc : bscTestnet;
 
 export const config = createConfig({
-  chains: [chain],
+  chains: [bsc, bscTestnet],
   transports: {
-    [chain.id]: http(process.env.NEXT_PUBLIC_BSC_RPC_URL),
+    56: http(process.env.NEXT_PUBLIC_BSC_MAINNET_RPC!),
+    97: http(process.env.NEXT_PUBLIC_BSC_RPC_URL!),
   },
 });
