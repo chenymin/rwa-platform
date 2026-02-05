@@ -319,6 +319,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
 
+  // If this hook is called during server-side rendering (build/prerender),
+  // return a safe fallback instead of throwing. This prevents build-time
+  // prerender failures where client-only hooks are invoked on the server.
+  if (typeof window === 'undefined') {
+    return {
+      user: null,
+      privyUser: null,
+      authenticated: false,
+      loading: true,
+      error: null,
+      isAdmin: false,
+      hasRole: () => false,
+      isArtist: false,
+      isUser: false,
+    } as AuthContextType;
+  }
+
   if (!context) {
     throw new Error('useAuth must be used within AuthProvider');
   }
