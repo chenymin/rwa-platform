@@ -10,7 +10,7 @@ import { ART_TOKEN_CONTRACT, ART_TOKEN_ABI, ERC20_ABI } from '@/lib/contracts';
  */
 export function useWalletAddress() {
   const { wallets } = useWallets();
-  const wallet = wallets[0];
+  const wallet = wallets?.find((wallet) => wallet.walletClientType === 'privy'); // 仅支持 BSC 链
   const address = wallet?.address as `0x${string}` | undefined;
   const isConnected = !!wallet;
 
