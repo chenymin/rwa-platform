@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,9 +19,29 @@ export function ConnectButton() {
   const { ready, login, logout: privyLogout, authenticated: privyAuthenticated } = usePrivy();
   const { user, authenticated, loading: authLoading, error: authError } = useAuth();
   const supabase = createClient();
+  const [mounted, setMounted] = React.useState(false);
 
-  // 使用统一的钱包余额 hook
-  const { address, isConnected, bnb, usdt } = useWalletBalances();
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 使用统一的钱包余额 hook - only after client mount to avoid SSR errors
+  let address: string | undefined = undefined;
+  let isConnected = false;
+  let bnb: any = { formatted: undefined, symbol: '' };
+  let usdt: any = { formatted: undefined };
+
+  if (mounted) {
+    try {
+      const result = useWalletBalances();
+      address = result.address;
+      isConnected = result.isConnected;
+      bnb = result.bnb;
+      usdt = result.usdt;
+    } catch (err) {
+      console.warn('Failed to fetch wallet balances:', err);
+    }
+  }
 
   // Handle logout from both Privy and Supabase
   const handleLogout = async () => {

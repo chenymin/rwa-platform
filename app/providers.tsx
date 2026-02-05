@@ -19,20 +19,6 @@ const queryClient = new QueryClient({
 });
 
 export function Providers({ children }: { children: ReactNode }) {
-  // Ensure we only attempt provider initialization after client mount.
-  // If initialization fails, fall back to rendering children directly
-  // so SSR/prerender doesn't crash the build.
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    // During the server render phase we avoid initializing providers.
-    return <>{children}</>;
-  }
-
   try {
     return (
       <PrivyProvider appId={privyConfig.appId} config={privyConfig.config}>
