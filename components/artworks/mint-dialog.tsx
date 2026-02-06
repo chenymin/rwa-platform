@@ -205,7 +205,12 @@ export function MintDialog({ open, onOpenChange, artworkTitle }: MintDialogProps
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
             <p className="text-muted-foreground">请先连接钱包</p>
           </div>
-        ) : !artToken.saleActive ? (
+        ) : artToken.saleActive === undefined ? (
+          <div className="py-6 text-center">
+            <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-muted-foreground" />
+            <p className="text-muted-foreground">加载中...</p>
+          </div>
+        ) : artToken.saleActive === false ? (
           <div className="py-6 text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
             <p className="text-muted-foreground">销售尚未开始</p>
@@ -291,6 +296,10 @@ export function MintDialog({ open, onOpenChange, artworkTitle }: MintDialogProps
         <DialogFooter>
           {step === 'success' ? (
             <Button onClick={handleClose}>完成</Button>
+          ) : !isConnected || artToken.saleActive !== true ? (
+            <Button variant="outline" onClick={handleClose}>
+              取消
+            </Button>
           ) : step === 'input' ? (
             <>
               <Button variant="outline" onClick={handleClose}>
@@ -299,14 +308,14 @@ export function MintDialog({ open, onOpenChange, artworkTitle }: MintDialogProps
               {needsApproval ? (
                 <Button
                   onClick={handleApprove}
-                  disabled={!amount || parseFloat(amount) <= 0 || !isConnected || !artToken.saleActive || isProcessing}
+                  disabled={!amount || parseFloat(amount) <= 0 || isProcessing}
                 >
                   授权 USDT
                 </Button>
               ) : (
                 <Button
                   onClick={handleMint}
-                  disabled={!amount || parseFloat(amount) <= 0 || !isConnected || !artToken.saleActive || isProcessing}
+                  disabled={!amount || parseFloat(amount) <= 0 || isProcessing}
                 >
                   购买
                 </Button>
