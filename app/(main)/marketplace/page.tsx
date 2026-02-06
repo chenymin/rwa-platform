@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Search, Filter, TrendingUp, Loader2, ShoppingCart } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { MintDialog } from '@/components/artworks/mint-dialog';
 
@@ -206,9 +205,8 @@ export default function MarketplacePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {filteredArtworks.map((artwork, index) => (
-                  <Link
+                  <div
                     key={artwork.id}
-                    href={`/marketplace/${artwork.id}`}
                     className="group"
                     style={getAnimationStyle(index)}
                   >
@@ -264,7 +262,12 @@ export default function MarketplacePage() {
                         </div>
 
                         <div className="flex gap-2 mt-4">
-                          <Button variant="outline" className="flex-1" size="sm">
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            size="sm"
+                            onClick={(e) => handleTradeClick(e, artwork)}
+                          >
                             查看详情
                           </Button>
                           <Button
@@ -278,7 +281,7 @@ export default function MarketplacePage() {
                         </div>
                       </div>
                     </Card>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </>
