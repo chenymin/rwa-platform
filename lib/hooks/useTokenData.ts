@@ -3,7 +3,7 @@
 import { useReadContract, useBalance } from 'wagmi';
 import { useWallets } from '@privy-io/react-auth';
 import { formatUnits } from 'viem';
-import { ART_TOKEN_CONTRACT, ART_TOKEN_ABI, ERC20_ABI } from '@/lib/contracts';
+import { ART_TOKEN_CONTRACT, ART_TOKEN_ABI, ERC20_ABI, CHAIN_ID } from '@/lib/contracts';
 
 /**
  * 获取当前连接的钱包地址
@@ -27,6 +27,7 @@ export function useUsdtContract(userAddress?: `0x${string}`) {
     address: ART_TOKEN_CONTRACT,
     abi: ART_TOKEN_ABI,
     functionName: 'USDT',
+    chainId: CHAIN_ID,
   });
 
   // 读取 USDT decimals
@@ -34,6 +35,7 @@ export function useUsdtContract(userAddress?: `0x${string}`) {
     address: usdtAddress,
     abi: ERC20_ABI,
     functionName: 'decimals',
+    chainId: CHAIN_ID,
     query: {
       enabled: !!usdtAddress,
     },
@@ -45,6 +47,7 @@ export function useUsdtContract(userAddress?: `0x${string}`) {
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: userAddress ? [userAddress] : undefined,
+    chainId: CHAIN_ID,
     query: {
       enabled: !!usdtAddress && !!userAddress,
     },
@@ -56,6 +59,7 @@ export function useUsdtContract(userAddress?: `0x${string}`) {
     abi: ERC20_ABI,
     functionName: 'allowance',
     args: userAddress ? [userAddress, ART_TOKEN_CONTRACT] : undefined,
+    chainId: CHAIN_ID,
     query: {
       enabled: !!usdtAddress && !!userAddress,
     },
@@ -87,6 +91,7 @@ export function useArtToken(userAddress?: `0x${string}`) {
     address: ART_TOKEN_CONTRACT,
     abi: ART_TOKEN_ABI,
     functionName: 'symbol',
+    chainId: CHAIN_ID,
   });
 
   // 读取代币名称
@@ -94,6 +99,7 @@ export function useArtToken(userAddress?: `0x${string}`) {
     address: ART_TOKEN_CONTRACT,
     abi: ART_TOKEN_ABI,
     functionName: 'name',
+    chainId: CHAIN_ID,
   });
 
   // 读取代币价格 (每个代币需要多少 USDT)
@@ -101,6 +107,7 @@ export function useArtToken(userAddress?: `0x${string}`) {
     address: ART_TOKEN_CONTRACT,
     abi: ART_TOKEN_ABI,
     functionName: 'priceUSDT',
+    chainId: CHAIN_ID,
   });
 
   // 读取销售状态
@@ -108,6 +115,7 @@ export function useArtToken(userAddress?: `0x${string}`) {
     address: ART_TOKEN_CONTRACT,
     abi: ART_TOKEN_ABI,
     functionName: 'saleActive',
+    chainId: CHAIN_ID,
   });
 
   // 读取已售出数量
@@ -115,6 +123,7 @@ export function useArtToken(userAddress?: `0x${string}`) {
     address: ART_TOKEN_CONTRACT,
     abi: ART_TOKEN_ABI,
     functionName: 'sold',
+    chainId: CHAIN_ID,
   });
 
   // 读取销售上限
@@ -122,6 +131,7 @@ export function useArtToken(userAddress?: `0x${string}`) {
     address: ART_TOKEN_CONTRACT,
     abi: ART_TOKEN_ABI,
     functionName: 'SALE_CAP',
+    chainId: CHAIN_ID,
   });
 
   // 读取总供应量
@@ -129,6 +139,7 @@ export function useArtToken(userAddress?: `0x${string}`) {
     address: ART_TOKEN_CONTRACT,
     abi: ART_TOKEN_ABI,
     functionName: 'totalSupply',
+    chainId: CHAIN_ID,
   });
 
   // 读取用户代币余额
@@ -137,6 +148,7 @@ export function useArtToken(userAddress?: `0x${string}`) {
     abi: ART_TOKEN_ABI,
     functionName: 'balanceOf',
     args: userAddress ? [userAddress] : undefined,
+    chainId: CHAIN_ID,
     query: {
       enabled: !!userAddress,
     },
@@ -169,6 +181,7 @@ export function useWalletBalances() {
   // 读取 BNB 余额
   const { data: bnbBalance } = useBalance({
     address: address,
+    chainId: CHAIN_ID,
     query: {
       enabled: !!address,
     },
