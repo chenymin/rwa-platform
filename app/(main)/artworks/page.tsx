@@ -1,7 +1,5 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useAuth } from '@/lib/hooks/useAuth';
 import { UserArtworksGuide } from '@/components/artworks/user-artworks-guide';
 import { ArtistArtworksList } from '@/components/artworks/artist-artworks-list';
@@ -10,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
 export default function ArtworksPage() {
-  const { user, authenticated: supabaseAuthenticated, loading, hasRole } = useAuth();
+  const { user, loading, hasRole } = useAuth();
   const { authenticated: privyAuthenticated, login } = usePrivy();
 
   // Loading state - initial load or syncing

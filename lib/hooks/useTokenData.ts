@@ -1,17 +1,16 @@
 'use client';
 
 import { useReadContract, useBalance } from 'wagmi';
-import { useWallets } from '@privy-io/react-auth';
+import { useActiveWallet } from '@privy-io/react-auth';
 import { formatUnits } from 'viem';
 import { ART_TOKEN_CONTRACT, ART_TOKEN_ABI, ERC20_ABI, CHAIN_ID } from '@/lib/contracts';
 
 /**
- * 获取当前连接的钱包地址
+ * 获取当前活跃的钱包地址
+ * useActiveWallet 返回用户当前使用的钱包（登录时选择的钱包）
  */
 export function useWalletAddress() {
-  // Only call hooks after client mount
-  const { wallets } = useWallets();
-  const wallet = wallets?.find((wallet) => wallet.walletClientType === 'privy');
+  const { wallet } = useActiveWallet();
   const address = wallet?.address as `0x${string}` | undefined;
   const isConnected = !!wallet;
 

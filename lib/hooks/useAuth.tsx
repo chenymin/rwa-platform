@@ -2,8 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/client'; // ✅ Use singleton client
+import { createClient } from '@/lib/supabase/client';
 
 interface SupabaseUser {
   privy_user_id: string;

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { PrivyProvider } from '@privy-io/react-auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
@@ -33,7 +32,6 @@ export function Providers({ children }: { children: ReactNode }) {
     );
   } catch (error) {
     console.error('Provider initialization error:', error);
-    // Fallback: render children without providers
     return <>{children}</>;
   }
 }
