@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { parseUnits, formatUnits, encodeFunctionData, createPublicClient, http } from 'viem';
-import { bscTestnet, bsc } from 'viem/chains';
+import { parseUnits, formatUnits, encodeFunctionData } from 'viem';
 import {
   Dialog,
   DialogContent,
@@ -15,17 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import { ART_TOKEN_CONTRACT, ART_TOKEN_ABI, ERC20_ABI, CHAIN_ID, EXPLORER_URL } from '@/lib/contracts';
+import { ART_TOKEN_CONTRACT, ART_TOKEN_ABI, ERC20_ABI, EXPLORER_URL, CHAIN_ID } from '@/lib/contracts';
 import { useWalletAddress, useArtToken, useUsdtContract } from '@/lib/hooks/useTokenData';
-
-// 获取当前链配置
-const chain = CHAIN_ID === 56 ? bsc : bscTestnet;
-
-// 创建公共客户端用于等待交易确认
-const publicClient = createPublicClient({
-  chain,
-  transport: http(process.env.NEXT_PUBLIC_BSC_RPC_URL),
-});
 
 interface MintDialogProps {
   open: boolean;
@@ -40,18 +30,14 @@ export function MintDialog({ open, onOpenChange, artworkTitle }: MintDialogProps
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 使用统一的 hooks
   const { address, isConnected, wallet } = useWalletAddress();
   const artToken = useArtToken(address);
   const usdt = useUsdtContract(address);
 
-  // USDT decimals
   const usdtDec = usdt.decimals;
-
-  // 计算可获得的代币数量
   const amountBigInt = amount ? parseUnits(amount, usdtDec) : BigInt(0);
 
-  // 代币数量 = (amountUSDT * 1e18) / priceUSDT
+  // 计算可获得的代币数量: (amountUSDT * 1e18) / priceUSDT
   const tokensToReceive = artToken.priceUSDT && amountBigInt > 0
     ? (amountBigInt * BigInt(10 ** 18)) / artToken.priceUSDT
     : BigInt(0);
@@ -59,37 +45,69 @@ export function MintDialog({ open, onOpenChange, artworkTitle }: MintDialogProps
   // 检查是否需要 approve
   const needsApproval = usdt.allowance !== undefined && amountBigInt > usdt.allowance;
 
-  // 使用 Privy 钱包发送交易
+  // 获取 provider 并确保网络正确
+  const getProvider = useCallback(async () => {
+    if (!wallet) throw new Error('钱包未连接');
+
+    // 使用 Privy 的 switchChain 方法切换网络（适用于所有钱包类型）
+    try {
+      await wallet.switchChain(CHAIN_ID);
+    } catch (err) {
+      console.warn('Network switch failed:', err);
+      // 某些情况下 switchChain 可能失败，但交易仍可能成功
+    }
+
+    const provider = await wallet.getEthereumProvider();
+    const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
+
+    return { provider, walletAddress: accounts[0] };
+  }, [wallet]);
+
+  // 发送交易
   const sendTransaction = useCallback(async (
     to: `0x${string}`,
     data: `0x${string}`
   ): Promise<`0x${string}`> => {
-    if (!wallet) {
-      throw new Error('钱包未连接');
-    }
-
-    const provider = await wallet.getEthereumProvider();
+    const { provider, walletAddress } = await getProvider();
 
     const hash = await provider.request({
       method: 'eth_sendTransaction',
-      params: [{
-        from: address,
-        to,
-        data,
-      }],
+      params: [{ from: walletAddress, to, data }],
     });
 
     return hash as `0x${string}`;
-  }, [wallet, address]);
+  }, [getProvider]);
 
   // 等待交易确认
   const waitForTransaction = useCallback(async (hash: `0x${string}`) => {
-    const receipt = await publicClient.waitForTransactionReceipt({
-      hash,
-      confirmations: 1,
-    });
-    return receipt;
-  }, []);
+    const { provider } = await getProvider();
+    const maxAttempts = 60;
+    const interval = 3000;
+
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        const receipt = await provider.request({
+          method: 'eth_getTransactionReceipt',
+          params: [hash],
+        }) as { status: string } | null;
+
+        if (receipt) {
+          if (receipt.status === '0x0') {
+            throw new Error('交易执行失败，请检查余额或授权额度');
+          }
+          return receipt;
+        }
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('交易执行失败')) {
+          throw err;
+        }
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, interval));
+    }
+
+    throw new Error(`交易确认超时，请在区块浏览器查看: ${hash}`);
+  }, [getProvider]);
 
   // 处理 approve
   const handleApprove = async () => {
@@ -106,21 +124,15 @@ export function MintDialog({ open, onOpenChange, artworkTitle }: MintDialogProps
         args: [ART_TOKEN_CONTRACT, amountBigInt],
       });
 
-      console.log('Sending approve transaction...');
       const hash = await sendTransaction(usdt.usdtAddress, data);
-      console.log('Approve TX Hash:', hash);
       setTxHash(hash);
 
-      console.log('Waiting for approve confirmation...');
       await waitForTransaction(hash);
-      console.log('Approve confirmed!');
-
       await usdt.refetchAllowance();
       await handleMintInternal();
     } catch (err: unknown) {
       console.error('Approve error:', err);
-      const errorMessage = err instanceof Error ? err.message : '授权失败';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : '授权失败');
       setStep('input');
     } finally {
       setIsProcessing(false);
@@ -138,16 +150,11 @@ export function MintDialog({ open, onOpenChange, artworkTitle }: MintDialogProps
         args: [amountBigInt],
       });
 
-      console.log('Sending mint transaction...');
       const hash = await sendTransaction(ART_TOKEN_CONTRACT, data);
-      console.log('Mint TX Hash:', hash);
       setTxHash(hash);
 
-      console.log('Waiting for mint confirmation...');
       await waitForTransaction(hash);
-      console.log('Mint confirmed!');
 
-      // 并行刷新余额
       await Promise.all([
         usdt.refetchBalance(),
         artToken.refetchBalance()
@@ -155,8 +162,7 @@ export function MintDialog({ open, onOpenChange, artworkTitle }: MintDialogProps
       setStep('success');
     } catch (err: unknown) {
       console.error('Mint error:', err);
-      const errorMessage = err instanceof Error ? err.message : '购买失败';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : '购买失败');
       setStep('input');
     }
   };
