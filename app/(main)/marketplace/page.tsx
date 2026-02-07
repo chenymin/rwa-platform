@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ function getAnimationStyle(index: number) {
 }
 
 export default function MarketplacePage() {
+  const { authenticated, login } = usePrivy();
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,9 +94,16 @@ export default function MarketplacePage() {
   const handleTradeClick = useCallback((e: React.MouseEvent, artwork: Artwork) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // 未登录时弹出登录框
+    if (!authenticated) {
+      login();
+      return;
+    }
+
     setSelectedArtwork(artwork);
     setMintDialogOpen(true);
-  }, []);
+  }, [authenticated, login]);
 
   const handleCategoryChange = useCallback((category: string) => {
     setSelectedCategory(category);

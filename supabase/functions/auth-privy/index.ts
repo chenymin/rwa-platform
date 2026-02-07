@@ -64,7 +64,7 @@ serve(async (req) => {
     }
 
     const privyApiResponse = await privyResponse.json()
-    console.log('✅ Privy API response received')
+    console.log('✅ Privy API response received', privyApiResponse)
 
     // Handle nested user object
     const privyUser: PrivyUser = privyApiResponse.user || privyApiResponse
@@ -73,6 +73,11 @@ serve(async (req) => {
     const privyUserId = privyUser.id
     const walletAddress = privyUser.wallet?.address
     const email = privyUser.email?.address
+
+    // Use privy ID suffix as placeholder email if no real email
+    // Privy ID format: "did:privy:cmlawpi3z024zl80c9g5onlj0" -> extract "cmlawpi3z024zl80c9g5onlj0"
+    const privyIdSuffix = privyUserId.split(':').pop() || privyUserId
+    const userEmail = email || `${privyIdSuffix}@privy.local`
 
     // Create Supabase admin client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -93,7 +98,7 @@ serve(async (req) => {
       // ✅ NEW: Create Supabase auth user first
       console.log('👤 Creating new Supabase auth user...')
       const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-        email: email || `${privyUserId}@privy.placeholder`,
+        email: userEmail!,
         email_confirm: true,
         user_metadata: {
           wallet_address: walletAddress,
@@ -157,7 +162,7 @@ serve(async (req) => {
       if (!authUserId) {
         console.log('🔄 Creating missing auth user for existing user...')
         const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-          email: email || `${privyUserId}@privy.placeholder`,
+          email: userEmail!,
           email_confirm: true,
           user_metadata: {
             wallet_address: walletAddress,
@@ -226,7 +231,7 @@ serve(async (req) => {
       iss: 'supabase',
       sub: authUserId, // ✅ FIXED: Use Supabase auth UUID instead of Privy DID
       role: 'authenticated',
-      email: email || `${privyUserId}@privy.placeholder`,
+      email: userEmail!,
       app_metadata: {
         provider: 'privy',
         privy_id: privyUserId,
@@ -258,7 +263,7 @@ serve(async (req) => {
           id: authUserId, // ✅ FIXED: Return auth user UUID
           aud: 'authenticated',
           role: 'authenticated',
-          email: email || `${privyUserId}@privy.placeholder`,
+          email: userEmail!,
           app_metadata: payload.app_metadata,
           user_metadata: payload.user_metadata,
           created_at: user?.created_at || timestamp,
