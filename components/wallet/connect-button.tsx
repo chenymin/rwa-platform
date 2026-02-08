@@ -10,10 +10,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useWalletBalances } from '@/lib/hooks/useTokenData';
+import { useWalletSelector } from '@/lib/hooks/useWalletSelector';
 
 // Inner component that uses wallet hooks - only rendered after mount
 function ConnectButtonInner() {
@@ -21,8 +24,11 @@ function ConnectButtonInner() {
   const { user, authenticated, loading: authLoading, error: authError } = useAuth();
   const supabase = createClient();
 
-  // Now it's safe to call this hook
-  const { address, isConnected, bnb, usdt } = useWalletBalances();
+  // 钱包选择器
+  const { wallets, selectedAddress, selectWallet, getWalletLabel } = useWalletSelector();
+
+  // 钱包余额
+  const { address, bnb, usdt } = useWalletBalances();
 
   const handleLogout = async () => {
     try {
@@ -81,13 +87,42 @@ function ConnectButtonInner() {
           {displayAddress}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel>我的账户</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-xs font-mono">
-          {address}
-        </DropdownMenuItem>
+
+        {/* 钱包切换 */}
+        {wallets.length > 1 && (
+          <>
+            <DropdownMenuLabel className="text-xs text-muted-foreground">切换钱包</DropdownMenuLabel>
+            <DropdownMenuRadioGroup value={selectedAddress || ''} onValueChange={selectWallet}>
+              {wallets.map((wallet) => (
+                <DropdownMenuRadioItem
+                  key={wallet.address}
+                  value={wallet.address}
+                  className="text-xs"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-medium">{getWalletLabel(wallet)}</span>
+                    <span className="font-mono text-muted-foreground">
+                      {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+                    </span>
+                  </div>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+          </>
+        )}
+
+        {/* 当前钱包地址 */}
+        <div className="px-2 py-1.5">
+          <div className="text-xs text-muted-foreground">当前钱包</div>
+          <div className="text-xs font-mono break-all">{address}</div>
+        </div>
         <DropdownMenuSeparator />
+
+        {/* 余额信息 */}
         <div className="px-2 py-1.5 space-y-2">
           <div>
             <div className="text-xs text-muted-foreground">BNB 余额</div>

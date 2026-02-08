@@ -1,24 +1,22 @@
 'use client';
 
 import { useReadContract, useBalance } from 'wagmi';
-import { useActiveWallet, ConnectedWallet } from '@privy-io/react-auth';
 import { formatUnits } from 'viem';
 import { ART_TOKEN_CONTRACT, ART_TOKEN_ABI, ERC20_ABI, CHAIN_ID } from '@/lib/contracts';
+import { useWalletSelector } from './useWalletSelector';
 
 /**
- * 获取当前活跃的钱包地址
- * useActiveWallet 返回用户当前使用的钱包（登录时选择的钱包）
+ * 获取用户选择的钱包地址
+ * 用户可以在多个钱包之间切换
  */
 export function useWalletAddress() {
-  const { wallet } = useActiveWallet();
+  const { selectedWallet, selectedAddress, isConnected } = useWalletSelector();
 
-  // 检查是否是 Ethereum 钱包（有 getEthereumProvider 方法）
-  const isEthereumWallet = wallet && 'getEthereumProvider' in wallet;
-  const ethWallet = isEthereumWallet ? (wallet as ConnectedWallet) : undefined;
-  const address = ethWallet?.address as `0x${string}` | undefined;
-  const isConnected = !!ethWallet;
-
-  return { address, isConnected, wallet: ethWallet };
+  return {
+    address: selectedAddress,
+    isConnected,
+    wallet: selectedWallet,
+  };
 }
 
 /**

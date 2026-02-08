@@ -6,6 +6,7 @@ import { WagmiProvider } from 'wagmi';
 import { config } from '@/lib/wagmi';
 import { privyConfig } from '@/lib/privy';
 import { AuthProvider } from '@/lib/hooks/useAuth';
+import { WalletSelectorProvider } from '@/lib/hooks/useWalletSelector';
 import { ReactNode } from 'react';
 
 const queryClient = new QueryClient({
@@ -23,9 +24,11 @@ export function Providers({ children }: { children: ReactNode }) {
       <PrivyProvider appId={privyConfig.appId} config={privyConfig.config}>
         <WagmiProvider config={config}>
           <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
+            <WalletSelectorProvider>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </WalletSelectorProvider>
           </QueryClientProvider>
         </WagmiProvider>
       </PrivyProvider>
