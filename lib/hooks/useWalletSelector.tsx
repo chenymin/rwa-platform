@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useWallets, ConnectedWallet } from '@privy-io/react-auth';
+import { useWallets, usePrivy, ConnectedWallet } from '@privy-io/react-auth';
 
 const SELECTED_WALLET_KEY = 'selected_wallet_address';
 
@@ -23,25 +23,28 @@ interface WalletSelectorContextType {
 const WalletSelectorContext = createContext<WalletSelectorContextType | null>(null);
 
 export function WalletSelectorProvider({ children }: { children: React.ReactNode }) {
+  const { authenticated } = usePrivy();
   const { wallets: allWallets } = useWallets();
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
 
   // 只获取 Ethereum 钱包
-  const wallets = allWallets.filter(
-    (w) => 'getEthereumProvider' in w
-  ) as ConnectedWallet[];
+  const wallets = authenticated
+    ? allWallets.filter((w) => 'getEthereumProvider' in w) as ConnectedWallet[]
+    : [];
 
-  // 从 sessionStorage 恢复选择
+  // 从 sessionStorage 恢复选择（只有在已认证时）
   useEffect(() => {
-    const saved = sessionStorage.getItem(SELECTED_WALLET_KEY);
-    if (saved) {
-      setSelectedAddress(saved);
+    if (authenticated) {
+      const saved = sessionStorage.getItem(SELECTED_WALLET_KEY);
+      if (saved) {
+        setSelectedAddress(saved);
+      }
     }
-  }, []);
+  }, [authenticated]);
 
-  // 当钱包列表变化时，验证选择是否仍然有效
+  // 当用户退出登录或钱包列表变化时，清除选择
   useEffect(() => {
-    if (wallets.length === 0) {
+    if (!authenticated || wallets.length === 0) {
       setSelectedAddress(null);
       sessionStorage.removeItem(SELECTED_WALLET_KEY);
       return;
@@ -60,7 +63,7 @@ export function WalletSelectorProvider({ children }: { children: React.ReactNode
         sessionStorage.setItem(SELECTED_WALLET_KEY, defaultWallet.address);
       }
     }
-  }, [wallets, selectedAddress]);
+  }, [authenticated, wallets, selectedAddress]);
 
   // 切换钱包
   const selectWallet = useCallback((address: string) => {
