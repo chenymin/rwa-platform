@@ -27,7 +27,7 @@ const ART_SPECIALIZATIONS = [
 
 export default function ApplyArtistPage() {
   const router = useRouter();
-  const { user, loading: authLoading, hasRole } = useAuth();
+  const { user, loading: authLoading, hasRole, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedSpecializations, setSelectedSpecializations] = useState<string[]>([]);
@@ -101,7 +101,8 @@ export default function ApplyArtistPage() {
         throw new Error(data.error || '申请失败');
       }
 
-      // 申请成功，跳转到作品管理页面
+      // 申请成功，刷新用户数据后跳转到作品管理页面
+      await refreshUser();
       router.push('/artworks');
     } catch (err) {
       console.error('Application error:', err);

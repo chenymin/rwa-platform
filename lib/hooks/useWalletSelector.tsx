@@ -23,13 +23,24 @@ interface WalletSelectorContextType {
 const WalletSelectorContext = createContext<WalletSelectorContextType | null>(null);
 
 export function WalletSelectorProvider({ children }: { children: React.ReactNode }) {
-  const { authenticated } = usePrivy();
+  const { authenticated, user } = usePrivy();
   const { wallets: allWallets } = useWallets();
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
 
-  // 只获取 Ethereum 钱包
+  // 获取用户 Privy 账户关联的钱包地址（安全：只允许使用用户自己的钱包）
+  const linkedWalletAddresses = new Set(
+    user?.linkedAccounts
+      ?.filter((account) => account.type === 'wallet')
+      .map((account) => (account as { address: string }).address.toLowerCase()) ?? []
+  );
+
+  // 只获取用户关联的钱包（内置钱包 或 已关联的外部钱包）
+  // 防止其他人使用浏览器中已登录但未关联的钱包
   const wallets = authenticated
-    ? allWallets.filter((w) => 'getEthereumProvider' in w) as ConnectedWallet[]
+    ? allWallets.filter((w) =>
+        'getEthereumProvider' in w &&
+        (w.walletClientType === 'privy' || linkedWalletAddresses.has(w.address.toLowerCase()))
+      ) as ConnectedWallet[]
     : [];
 
   // 从 sessionStorage 恢复选择（只有在已认证时）

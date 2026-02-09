@@ -31,6 +31,7 @@ interface AuthContextType {
   hasRole: (role: string) => boolean;
   isArtist: boolean;
   isUser: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -275,6 +276,87 @@ function useAuthState() {
     return supabaseUser?.roles?.includes(role) ?? false;
   };
 
+  // 强制刷新用户数据（用于角色变更后）
+  const refreshUser = async () => {
+    if (!authenticated || !user) {
+      console.log('🔄 [useAuth] Cannot refresh - not authenticated');
+      return;
+    }
+
+    console.log('🔄 [useAuth] Forcing user data refresh...');
+
+    // 清除缓存，强制重新认证
+    authenticatedUserIdRef.current = null;
+    localStorage.removeItem('supabase_user');
+
+    // 清除时间限制
+    const lastAuthKey = `lastAuth_${user.id}`;
+    delete (window as any)[lastAuthKey];
+
+    try {
+      setLoading(true);
+      const privyToken = await getAccessToken();
+
+      if (!privyToken) {
+        throw new Error('无法获取 Privy token');
+      }
+
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/auth-privy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ privyToken }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '刷新失败');
+      }
+
+      const data = await response.json();
+
+      if (data.access_token && data.user) {
+        const session = {
+          access_token: data.access_token,
+          token_type: data.token_type,
+          expires_in: data.expires_in,
+          expires_at: data.expires_at,
+          refresh_token: data.refresh_token || '',
+          user: data.user,
+        };
+
+        localStorage.setItem('supabase_session', JSON.stringify(session));
+
+        const supabase = createClient();
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        });
+
+        const userData: SupabaseUser = data.userData || {
+          privy_user_id: user.id,
+          wallet_address: null,
+          email: null,
+          roles: ['user'],
+          is_verified: false,
+        };
+
+        localStorage.setItem('supabase_user', JSON.stringify(userData));
+        setSupabaseUser(userData);
+        authenticatedUserIdRef.current = user.id;
+        console.log('✅ [useAuth] User data refreshed:', userData.roles);
+      }
+    } catch (err) {
+      console.error('❌ [useAuth] Refresh error:', err);
+      setError(err instanceof Error ? err.message : '刷新失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 在未挂载时返回加载状态，确保 SSR 和客户端首次渲染一致
   if (!mounted) {
     return {
@@ -287,6 +369,7 @@ function useAuthState() {
       hasRole: () => false,
       isArtist: false,
       isUser: false,
+      refreshUser: async () => {},
     };
   }
 
@@ -300,6 +383,7 @@ function useAuthState() {
     hasRole,
     isArtist: hasRole('artist'),
     isUser: hasRole('user'),
+    refreshUser,
   };
 }
 
@@ -332,6 +416,7 @@ export function useAuth() {
       hasRole: () => false,
       isArtist: false,
       isUser: false,
+      refreshUser: async () => {},
     } as AuthContextType;
   }
 
