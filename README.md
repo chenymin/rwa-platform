@@ -1,3 +1,4 @@
+本项目存粹是为了项目练习手,理解背后的流程与原理
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
