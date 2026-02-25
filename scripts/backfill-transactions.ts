@@ -91,14 +91,14 @@ async function main() {
   console.log(`📦 区块范围: ${fromBlock} - ${toBlock}`)
   console.log(`📦 批次大小: ${batchSize} 个区块`)
 
-  let processedBlocks = 0n
+  let processedBlocks = BigInt(0)
   let totalEvents = 0
   let startBlock = fromBlock
 
   while (startBlock <= toBlock) {
-    const endBlock = startBlock + BigInt(batchSize) - 1n > toBlock
+    const endBlock = startBlock + BigInt(batchSize) - BigInt(1) > toBlock
       ? toBlock
-      : startBlock + BigInt(batchSize) - 1n
+      : startBlock + BigInt(batchSize) - BigInt(1)
 
     console.log(`\n📦 处理区块 ${startBlock} - ${endBlock}...`)
 
@@ -201,14 +201,14 @@ async function main() {
           onConflict: 'contract_address',
         })
 
-      processedBlocks = endBlock - fromBlock + 1n
+      processedBlocks = endBlock - fromBlock + BigInt(1)
 
     } catch (error) {
       console.error(`  ❌ 处理失败:`, error)
       // 继续处理下一批
     }
 
-    startBlock = endBlock + 1n
+    startBlock = endBlock + BigInt(1)
 
     // 避免请求过快
     await new Promise((resolve) => setTimeout(resolve, 500))
