@@ -18,6 +18,7 @@ interface PrivyUser {
   id: string
   wallet?: { address: string; chain_type?: string }
   email?: { address: string }
+  linkedAccounts?: Array<{ type: string; address?: string }>
   createdAt?: string
 }
 
@@ -71,8 +72,19 @@ serve(async (req) => {
     console.log('✅ Privy user verified:', privyUser.id)
 
     const privyUserId = privyUser.id
-    const walletAddress = privyUser.wallet?.address
     const email = privyUser.email?.address
+
+    // 获取钱包地址：优先嵌入式钱包，其次关联的外部钱包
+    let walletAddress = privyUser.wallet?.address
+    if (!walletAddress && privyUser.linkedAccounts) {
+      const linkedWallet = privyUser.linkedAccounts.find(
+        (account) => account.type === 'wallet' && account.address
+      )
+      if (linkedWallet) {
+        walletAddress = linkedWallet.address
+      }
+    }
+    console.log('📱 Wallet address:', walletAddress || 'none')
 
     // Use privy ID suffix as placeholder email if no real email
     // Privy ID format: "did:privy:cmlawpi3z024zl80c9g5onlj0" -> extract "cmlawpi3z024zl80c9g5onlj0"

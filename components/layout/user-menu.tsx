@@ -90,7 +90,7 @@ export function UserMenu() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/orders" className="flex items-center gap-2 cursor-pointer">
+              <Link href="/transactions" className="flex items-center gap-2 cursor-pointer">
                 <ShoppingCart className="h-4 w-4" />
                 我的订单
               </Link>
@@ -124,7 +124,7 @@ export function UserMenu() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/orders" className="flex items-center gap-2 cursor-pointer">
+              <Link href="/transactions" className="flex items-center gap-2 cursor-pointer">
                 <ShoppingCart className="h-4 w-4" />
                 我的订单
               </Link>

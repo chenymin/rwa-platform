@@ -27,8 +27,18 @@ export async function POST(request: NextRequest) {
 
     // Step 2: 提取用户信息
     const privyUserId = user.id; // Privy user ID
-    const walletAddress = user.wallet?.address || null;
     const email = user.email?.address || null;
+
+    // 获取钱包地址：优先嵌入式钱包，其次关联的外部钱包
+    let walletAddress = user.wallet?.address || null;
+    if (!walletAddress && user.linkedAccounts) {
+      const linkedWallet = user.linkedAccounts.find(
+        (account: { type: string; address?: string }) => account.type === 'wallet'
+      );
+      if (linkedWallet && 'address' in linkedWallet) {
+        walletAddress = linkedWallet.address;
+      }
+    }
 
     // Step 3: 在 Supabase 中创建或更新用户
     const { data: existingUser, error: fetchError } = await supabaseAdmin

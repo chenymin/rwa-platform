@@ -2,6 +2,26 @@
 
 // 艺术品代币合约 ABI
 export const ART_TOKEN_ABI = [
+  // ========== 事件 ==========
+  {
+    type: 'event',
+    name: 'Transfer',
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'from', type: 'address' },
+      { indexed: true, internalType: 'address', name: 'to', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'value', type: 'uint256' },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'Approval',
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
+      { indexed: true, internalType: 'address', name: 'spender', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'value', type: 'uint256' },
+    ],
+  },
+  // ========== 函数 ==========
   {
     inputs: [{ internalType: 'uint256', name: 'amountUSDT', type: 'uint256' }],
     name: 'mint',
@@ -76,6 +96,26 @@ export const ART_TOKEN_ABI = [
 
 // ERC20 标准 ABI (用于 USDT 等代币)
 export const ERC20_ABI = [
+  // ========== 事件 ==========
+  {
+    type: 'event',
+    name: 'Transfer',
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'from', type: 'address' },
+      { indexed: true, internalType: 'address', name: 'to', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'value', type: 'uint256' },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'Approval',
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
+      { indexed: true, internalType: 'address', name: 'spender', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'value', type: 'uint256' },
+    ],
+  },
+  // ========== 函数 ==========
   {
     inputs: [
       { internalType: 'address', name: 'spender', type: 'address' },
