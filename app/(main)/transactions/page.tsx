@@ -6,7 +6,7 @@ import { useTransactions, useTransactionFilters, Transaction } from '@/lib/hooks
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { usePrivy } from '@privy-io/react-auth';
 import { EXPLORER_URL } from '@/lib/contracts';
+import { CardListSkeleton, TransactionTableSkeleton } from '@/components/skeletons';
 
 // 交易类型配置
 const EVENT_TYPES = [
@@ -245,9 +246,11 @@ export default function TransactionsPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
+            <>
+              <CardListSkeleton count={5} />
+              <TransactionTableSkeleton rows={5} />
+            </>
+
           ) : error ? (
             <div className="flex items-center justify-center py-16 text-red-500">
               {error.message}

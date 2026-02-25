@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ImagePlus, Loader2, Eye, Edit, MoreVertical, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ImagePlus, Eye, Edit, MoreVertical, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/skeletons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -106,11 +107,17 @@ export function ArtistArtworksList() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">加载中...</p>
+      <div className="max-w-7xl mx-auto">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <div className="h-8 w-32 bg-muted rounded animate-pulse mb-2" />
+            <div className="h-4 w-48 bg-muted rounded animate-pulse" />
+          </div>
+          <div className="h-10 w-32 bg-muted rounded animate-pulse" />
         </div>
+        {/* Cards skeleton */}
+        <CardGridSkeleton count={6} columns="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
       </div>
     );
   }

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { MintDialogSkeleton } from '@/components/skeletons';
 import { ART_TOKEN_CONTRACT, ART_TOKEN_ABI, ERC20_ABI, EXPLORER_URL, CHAIN_ID } from '@/lib/contracts';
 import { useWalletAddress, useArtToken, useUsdtContract } from '@/lib/hooks/useTokenData';
 
@@ -212,10 +213,7 @@ export function MintDialog({ open, onOpenChange, artworkTitle }: MintDialogProps
             <p className="text-muted-foreground">请先连接钱包</p>
           </div>
         ) : artToken.saleActive === undefined ? (
-          <div className="py-6 text-center">
-            <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-muted-foreground" />
-            <p className="text-muted-foreground">加载中...</p>
-          </div>
+          <MintDialogSkeleton />
         ) : artToken.saleActive === false ? (
           <div className="py-6 text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />

@@ -5,32 +5,43 @@ import { UserArtworksGuide } from '@/components/artworks/user-artworks-guide';
 import { ArtistArtworksList } from '@/components/artworks/artist-artworks-list';
 import { usePrivy } from '@privy-io/react-auth';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ArtworksPage() {
   const { user, loading, hasRole } = useAuth();
   const { authenticated: privyAuthenticated, login } = usePrivy();
 
   // Loading state - initial load or syncing
-  if (loading) {
+  if (loading || (privyAuthenticated && !user)) {
     return (
-      <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">加载中...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // User logged in with Privy but Supabase user not synced yet
-  if (privyAuthenticated && !user) {
-    return (
-      <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground mb-2">正在同步账户信息...</p>
-          <p className="text-xs text-muted-foreground">首次登录可能需要几秒钟</p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header skeleton */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <Skeleton className="h-8 w-32 mb-2" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </div>
+          {/* Tabs skeleton */}
+          <Skeleton className="h-10 w-64 mb-8" />
+          {/* Cards skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-lg border overflow-hidden">
+                <Skeleton className="aspect-square w-full" />
+                <div className="p-4">
+                  <Skeleton className="h-5 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2 mb-3" />
+                  <div className="flex justify-between">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

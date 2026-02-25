@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Search, Filter, TrendingUp, Loader2, ShoppingCart } from 'lucide-react';
+import { Search, Filter, TrendingUp, ShoppingCart } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/skeletons';
 import Image from 'next/image';
 import { MintDialog } from '@/components/artworks/mint-dialog';
 
@@ -191,8 +192,8 @@ export default function MarketplacePage() {
       <section className="py-16">
         <div className="container mx-auto px-4">
           {loading ? (
-            <div className="flex items-center justify-center py-32">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <div className="py-8">
+              <CardGridSkeleton count={8} />
             </div>
           ) : filteredArtworks.length === 0 ? (
             <div className="text-center py-32">
