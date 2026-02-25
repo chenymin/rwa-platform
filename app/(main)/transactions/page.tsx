@@ -123,19 +123,19 @@ export default function TransactionsPage() {
   const shortAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-6 md:py-8">
       {/* 页面标题 */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">交易记录</h1>
-        <p className="text-muted-foreground">查看您的所有链上交易</p>
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">交易记录</h1>
+        <p className="text-sm md:text-base text-muted-foreground">查看您的所有链上交易</p>
       </div>
 
       {/* 筛选栏 */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-4 items-end">
+      <Card className="mb-4 md:mb-6">
+        <CardContent className="pt-4 md:pt-6">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 sm:items-end">
             {/* 搜索框 */}
-            <div className="flex-1 min-w-[200px]">
+            <div className="flex-1">
               <label className="text-sm text-muted-foreground mb-1 block">搜索交易哈希</label>
               <div className="flex gap-2">
                 <Input
@@ -143,21 +143,22 @@ export default function TransactionsPage() {
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="h-9 md:h-10"
                 />
-                <Button variant="outline" size="icon" onClick={handleSearch}>
+                <Button variant="outline" size="icon" onClick={handleSearch} className="h-9 w-9 md:h-10 md:w-10 shrink-0">
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
             {/* 类型筛选 */}
-            <div className="w-[150px]">
+            <div className="w-full sm:w-[150px]">
               <label className="text-sm text-muted-foreground mb-1 block">交易类型</label>
               <Select
                 value={filters.type?.[0] || 'all'}
                 onValueChange={handleTypeChange}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10">
                   <SelectValue placeholder="全部类型" />
                 </SelectTrigger>
                 <SelectContent>
@@ -192,7 +193,7 @@ export default function TransactionsPage() {
 
           {/* 高级筛选面板 */}
           {showFilters && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-4 pt-4 border-t">
               <div>
                 <label className="text-sm text-muted-foreground mb-1 block">开始时间</label>
                 <Input
@@ -201,6 +202,7 @@ export default function TransactionsPage() {
                   onChange={(e) => updateFilters({
                     startDate: e.target.value ? new Date(e.target.value).toISOString() : undefined
                   })}
+                  className="h-9 md:h-10"
                 />
               </div>
               <div>
@@ -211,6 +213,7 @@ export default function TransactionsPage() {
                   onChange={(e) => updateFilters({
                     endDate: e.target.value ? new Date(e.target.value).toISOString() : undefined
                   })}
+                  className="h-9 md:h-10"
                 />
               </div>
               <div>
@@ -220,6 +223,7 @@ export default function TransactionsPage() {
                   placeholder="0"
                   value={filters.minAmount || ''}
                   onChange={(e) => updateFilters({ minAmount: e.target.value || undefined })}
+                  className="h-9 md:h-10"
                 />
               </div>
               <div>
@@ -229,6 +233,7 @@ export default function TransactionsPage() {
                   placeholder="不限"
                   value={filters.maxAmount || ''}
                   onChange={(e) => updateFilters({ maxAmount: e.target.value || undefined })}
+                  className="h-9 md:h-10"
                 />
               </div>
             </div>
@@ -254,7 +259,66 @@ export default function TransactionsPage() {
             </div>
           ) : (
             <>
-              <Table>
+              {/* 手机端卡片视图 */}
+              <div className="md:hidden divide-y">
+                {data.data.map((tx) => {
+                  const config = getEventConfig(tx.event_type);
+                  const Icon = config.icon;
+
+                  return (
+                    <div
+                      key={tx.id}
+                      className="p-4 hover:bg-muted/50 cursor-pointer"
+                      onClick={() => setSelectedTx(tx)}
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <Badge variant="secondary" className={config.color}>
+                          <Icon className="h-3 w-3 mr-1" />
+                          {config.label}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatTime(tx.block_timestamp)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">
+                            {tx.token_amount_formatted || '0'} ART
+                          </div>
+                          {tx.usdt_amount_formatted && (
+                            <div className="text-xs text-muted-foreground">
+                              ≈ {tx.usdt_amount_formatted} USDT
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {shortAddress(tx.tx_hash)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            asChild
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <a
+                              href={`${EXPLORER_URL}/tx/${tx.tx_hash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 桌面端表格视图 */}
+              <Table className="hidden md:table">
                 <TableHeader>
                   <TableRow>
                     <TableHead>交易哈希</TableHead>
@@ -325,9 +389,10 @@ export default function TransactionsPage() {
 
               {/* 分页 */}
               {data.pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    共 {data.pagination.total} 条记录，第 {page} / {data.pagination.totalPages} 页
+                <div className="flex items-center justify-between px-4 py-3 md:py-4 border-t">
+                  <div className="text-xs md:text-sm text-muted-foreground">
+                    <span className="hidden sm:inline">共 {data.pagination.total} 条记录，</span>
+                    第 {page} / {data.pagination.totalPages} 页
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -335,15 +400,19 @@ export default function TransactionsPage() {
                       size="sm"
                       onClick={() => goToPage(page - 1)}
                       disabled={page <= 1}
+                      className="h-8 w-8 p-0 md:h-9 md:w-auto md:px-3"
                     >
                       <ChevronLeft className="h-4 w-4" />
+                      <span className="hidden md:inline ml-1">上一页</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => goToPage(page + 1)}
                       disabled={page >= data.pagination.totalPages}
+                      className="h-8 w-8 p-0 md:h-9 md:w-auto md:px-3"
                     >
+                      <span className="hidden md:inline mr-1">下一页</span>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -461,19 +530,30 @@ function DetailRow({
   mono?: boolean;
   copyable?: boolean;
 }) {
+  const [copied, setCopied] = useState(false);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
+  // 长值（如地址、哈希）在手机上垂直堆叠
+  const isLongValue = mono && value.length > 20;
+
   return (
-    <div className="flex justify-between items-start gap-4">
+    <div className={`${isLongValue ? 'flex flex-col gap-1' : 'flex justify-between items-start gap-4'}`}>
       <span className="text-muted-foreground text-sm shrink-0">{label}</span>
       <span
-        className={`text-sm text-right break-all ${mono ? 'font-mono' : ''} ${copyable ? 'cursor-pointer hover:text-primary' : ''}`}
+        className={`text-sm ${isLongValue ? 'text-left' : 'text-right'} break-all ${mono ? 'font-mono text-xs' : ''} ${copyable ? 'cursor-pointer hover:text-primary active:text-primary/80' : ''}`}
         onClick={copyable ? handleCopy : undefined}
-        title={copyable ? '点击复制' : undefined}
       >
         {value}
+        {copyable && (
+          <span className="ml-2 text-xs text-muted-foreground">
+            {copied ? '✓ 已复制' : '点击复制'}
+          </span>
+        )}
       </span>
     </div>
   );
